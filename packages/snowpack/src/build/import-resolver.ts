@@ -64,7 +64,10 @@ export function createImportResolver({
       let result = spec.replace(from, to);
       const importStats = getImportStats(cwd, result);
       result = resolveSourceSpecifier(result, importStats, config);
-      result = path.posix.relative(path.dirname(fileLoc), result);
+      result = path.posix.relative(
+        path.dirname(path.posix.normalize(fileLoc)),
+        path.posix.normalize(result),
+      );
       if (!result.startsWith('.')) {
         result = './' + result;
       }

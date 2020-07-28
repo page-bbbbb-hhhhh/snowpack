@@ -54,11 +54,17 @@ async function runPipelineLoadStep(
         });
       },
     });
-    const mainOutputExt = step.resolve.output[0];
     if (typeof result === 'string') {
+      const mainOutputExt = step.resolve.output[0];
       return {[mainOutputExt]: result};
     } else if (result && typeof result === 'object') {
-      return result;
+      const output: Record<string, string> = {};
+      Object.entries(result).forEach(([ext, code]) => {
+        if (code) {
+          output[ext.replace(/^\.?/, '.')] = code; // ensure leading dot character
+        }
+      });
+      return output;
     } else {
       continue;
     }
@@ -77,7 +83,7 @@ async function runPipelineTransformStep(
   output: Record<string, string>,
   srcPath: string,
   {buildPipeline, messageBus, isDev}: BuildFileOptions,
-) {
+): Promise<Record<string, string>> {
   const srcExt = getExt(srcPath).baseExt;
   const rootFileName = path.basename(srcPath).replace(srcExt, '');
   for (const step of buildPipeline) {
@@ -136,6 +142,7 @@ export async function buildFile(
 ): Promise<SnowpackBuildMap> {
   // Pass 1: Find the first plugin to load this file, and return the result
   const loadResult = await runPipelineLoadStep(srcPath, buildFileOptions);
+  console.log(loadResult);
   // Pass 2: Pass that result through every plugin transfomr() method.
   const transformResult = await runPipelineTransformStep(loadResult, srcPath, buildFileOptions);
   // Return the final build result.

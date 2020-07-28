@@ -1,10 +1,12 @@
-const babel = require("@babel/core");
+const babel = require('@babel/core');
 
-module.exports = function plugin(config, options) {
+module.exports = function plugin() {
   return {
-    defaultBuildScript: "build:js,jsx,ts,tsx",
-    async build({ contents, filePath, fileContents }) {
-      const result = await babel.transformAsync(contents || fileContents, {
+    name: '@snowpack/plugin-babel',
+    async transform({contents, fileExt, filePath}) {
+      if (!filePath || fileExt !== '.js') return;
+
+      const result = await babel.transformAsync(contents, {
         filename: filePath,
         cwd: process.cwd(),
         ast: false,
@@ -18,7 +20,7 @@ module.exports = function plugin(config, options) {
         // See: https://www.pika.dev/npm/snowpack/discuss/496
         code = code.replace(/process\.env/g, 'import.meta.env');
       }
-      return { result: code };
+      return code;
     },
   };
 };
